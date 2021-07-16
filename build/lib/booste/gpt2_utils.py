@@ -1,4 +1,6 @@
 import requests
+import aiohttp
+from aiohttp_requests import requests as asyncrequests
 import time
 import os
 import json
@@ -52,13 +54,13 @@ def gpt2_sync_main(api_key, model_size, in_string, length, temperature, window_m
             raise Exception("Server error: Booste inference job returned status 'Failed'")
         time.sleep(interval)
 
-def gpt2_async_start_main(api_key, model_size, in_string, length, temperature, window_max):
+async def gpt2_async_start_main(api_key, model_size, in_string, length, temperature, window_max):
     sync_mode = "asynchronous"
     validate_input(temperature, window_max)
     task_id = call_start_api(api_key, sync_mode, model_size, in_string, length, temperature, window_max)
     return task_id
 
-def gpt2_async_check_main(api_key, task_id):
+async def gpt2_async_check_main(api_key, task_id):
     sync_mode = "asynchronous"
     dict_out = call_check_api(api_key, sync_mode, task_id)
     return dict_out
@@ -117,7 +119,19 @@ def call_check_api(api_key, sync_mode, task_id):
     out = response.json()
     return out
 
+async def async_call_check_api(api_key, sync_mode, task_id):
+    global endpoint
+    route_check = 'inference/pretrained/gpt2/async/check/v2'
+    url_check = endpoint + route_check
 
+    # Poll server for completed task
+    payload = {"TaskID": task_id, "apiKey": api_key, "syncMode": sync_mode}
+    response = await asyncrequests.post(url_check, json=payload)
+    if response.status_code != 200:
+        raise Exception("Server error: Booste inference server returned status code {}\n{}".format(
+            response.status_code, response.json()['message']))
+    out = response.json()
+    return out
 
 
 # THE MISC FUNCTIONS

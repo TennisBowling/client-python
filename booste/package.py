@@ -44,8 +44,8 @@ def gpt2(api_key, in_string, length = 5, temperature = 0.8, window_max = 100):
         window_max = window_max)
     return out_list
 
-def gpt2_async_start(api_key, in_string, length = 5, temperature = 0.8, window_max = 100):
-    task_id = gpt2_async_start_main(
+async def gpt2_async_start(api_key, in_string, length = 5, temperature = 0.8, window_max = 100):
+    task_id = await gpt2_async_start_main(
         api_key = api_key, 
         model_size = "gpt2", 
         in_string = in_string, 
@@ -54,8 +54,8 @@ def gpt2_async_start(api_key, in_string, length = 5, temperature = 0.8, window_m
         window_max = window_max)
     return task_id
 
-def gpt2_async_check(api_key, task_id):
-    dict_out = gpt2_async_check_main(api_key, task_id)
+async def gpt2_async_check(api_key, task_id):
+    dict_out = await gpt2_async_check_main(api_key, task_id)
     return dict_out
 
 # GPT2 XL
@@ -69,8 +69,8 @@ def gpt2_xl(api_key, in_string, length = 5, temperature = 0.8, window_max = 100)
         window_max = window_max)
     return out_list
 
-def gpt2_xl_async_start(api_key, in_string, length = 5, temperature = 0.8, window_max = 100):
-    task_id = gpt2_async_start_main(
+async def gpt2_xl_async_start(api_key, in_string, length = 5, temperature = 0.8, window_max = 100):
+    task_id = await gpt2_async_start_main(
         api_key = api_key, 
         model_size = "gpt2-xl", 
         in_string = in_string, 
@@ -79,8 +79,8 @@ def gpt2_xl_async_start(api_key, in_string, length = 5, temperature = 0.8, windo
         window_max = window_max)
     return task_id
 
-def gpt2_xl_async_check(api_key, task_id):
-    dict_out = gpt2_async_check_main(api_key, task_id)
+async def gpt2_xl_async_check(api_key, task_id):
+    dict_out = await gpt2_async_check_main(api_key, task_id)
     return dict_out
 
 def clip(api_key, prompts, images, pretty_print=False):

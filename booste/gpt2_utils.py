@@ -1,4 +1,6 @@
 import requests
+import aiohttp
+from aiohttp_requests import requests as asyncrequests
 import time
 import os
 import json
@@ -52,15 +54,15 @@ def gpt2_sync_main(api_key, model_size, in_string, length, temperature, window_m
             raise Exception("Server error: Booste inference job returned status 'Failed'")
         time.sleep(interval)
 
-def gpt2_async_start_main(api_key, model_size, in_string, length, temperature, window_max):
+async def gpt2_async_start_main(api_key, model_size, in_string, length, temperature, window_max):
     sync_mode = "asynchronous"
     validate_input(temperature, window_max)
-    task_id = call_start_api(api_key, sync_mode, model_size, in_string, length, temperature, window_max)
+    task_id = await call_start_api(api_key, sync_mode, model_size, in_string, length, temperature, window_max)
     return task_id
 
-def gpt2_async_check_main(api_key, task_id):
+async def gpt2_async_check_main(api_key, task_id):
     sync_mode = "asynchronous"
-    dict_out = call_check_api(api_key, sync_mode, task_id)
+    dict_out = await call_check_api(api_key, sync_mode, task_id)
     return dict_out
 
 
@@ -101,6 +103,34 @@ def call_start_api(api_key, sync_mode, model_size, in_string, length, temperatur
     except:
         raise Exception("Server error: Failed to return TaskID")
 
+async def async_call_start_api(api_key, sync_mode, model_size, in_string, length, temperature, window_max):
+    global endpoint
+    route_start = 'inference/pretrained/gpt2/async/start'
+    url_start = endpoint + route_start
+
+    global cache
+    # sequence = []
+    payload = {
+        "string" : in_string,
+        "length" : str(length),                                               # this function is just the other one but with async and uses aiohttp
+        "temperature" : str(temperature),
+        "machineID" : cache['machine_id'],
+        "apiKey" : api_key,
+        "modelSize" : model_size,
+        "windowMax" : window_max, 
+        "syncMode": sync_mode
+    }
+    response = await asyncrequests.post(url_start, json=payload)
+    if await response.status_code != 200:
+        raise Exception("Server error: Booste inference server returned status code {}\n{}".format(
+            await response.status_code, await response.json()['message']))
+    
+    try:
+        task_id = await response.json()['TaskID']
+        return task_id
+    except:
+        raise Exception("Server error: Failed to return TaskID")
+
 # The bare async checker. Used by both gpt2_sync_main (automated) and async (client called)
 # Takes in task ID, returns reformatted dict_out with Status and Output
 def call_check_api(api_key, sync_mode, task_id):
@@ -114,10 +144,22 @@ def call_check_api(api_key, sync_mode, task_id):
     if response.status_code != 200:
         raise Exception("Server error: Booste inference server returned status code {}\n{}".format(
             response.status_code, response.json()['message']))
-    out = response.json()
-    return out
 
+    return response.json
 
+async def async_call_check_api(api_key, sync_mode, task_id):
+    global endpoint
+    route_check = 'inference/pretrained/gpt2/async/check/v2'
+    url_check = endpoint + route_check
+
+    # Poll server for completed task
+    payload = {"TaskID": task_id, "apiKey": api_key, "syncMode": sync_mode}
+    response = await asyncrequests.post(url_check, json=payload)
+    if await response.status_code != 200:
+        raise Exception("Server error: Booste inference server returned status code {}\n{}".format(
+            await response.status_code, await response.json()['message']))
+
+    return await response.json()
 
 
 # THE MISC FUNCTIONS

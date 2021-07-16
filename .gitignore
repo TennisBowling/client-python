@@ -4,6 +4,7 @@ dist/*
 .egg
 .pyc
 __pycache__
+.vscode
 
 # testing files
 demo*

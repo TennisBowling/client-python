@@ -1,4 +1,6 @@
 import requests
+import aiohttp
+from aiohttp_requests import requests as asyncrequests
 import time
 import os
 import json
@@ -111,4 +113,28 @@ def call_check_api(api_key, task_id):
     out = response.json()
     if not out['success']:
         raise Exception(f"Booste inference check call failed with message: {out.message}")
+    return out
+
+async def async_call_check_api(api_key, task_id):
+    global endpoint
+    route_check = "api/task/check/v1/"
+    url_check = endpoint + route_check
+    # Poll server for completed task
+
+    payload = {
+        "id": str(uuid4()),
+        "created": int(time.time()),
+        "longPoll": True,
+        "data": {
+            "taskID": task_id, 
+            "apiKey": api_key
+        }
+    }
+    response = await asyncrequests.post(url_check, json=payload)
+    if await response.status_code != 200:
+        raise Exception("Server error: Booste inference server returned status code {}\n{}".format(
+            await response.status_code, await response.json()['message']))
+    out = await response.json()
+    if not await out['success']:
+        raise Exception(f"Booste inference check call failed with message: {await out.message}")
     return out
